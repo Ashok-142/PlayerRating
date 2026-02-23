@@ -1,0 +1,12 @@
+player_id,player_name,role,rating,batting_score,bowling_score,fielding_score
+P002,Bumrah Mock,bowler,64.37,34.22,89.29,18.64
+P005,Rashid Mock,bowler,56.37,46.06,76.36,29.14
+P007,Shami Mock,bowler,55.59,30.72,77.7,12.0
+P003,Hardik Mock,allrounder,54.97,61.1,55.4,25.45
+P001,Virat Mock,batter,54.86,75.01,11.98,23.54
+P010,Axar Mock,allrounder,52.49,52.11,59.03,24.76
+P004,Rohit Mock,batter,49.83,67.75,39.0,24.0
+P006,Jadeja Mock,bowler,49.38,54.09,65.0,38.77
+P008,Rinku Mock,batter,47.64,64.9,39.0,22.04
+P011,Stokes Mock,batter,44.79,60.28,49.07,25.95
+P009,Siraj Mock,bowler,43.64,27.88,61.01,9.32
