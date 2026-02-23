@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "player-rating-tool"
+version = "0.1.0"
+description = "Cricket player role classification and rating toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "PlayerRating"}]
+
+[project.scripts]
+player-rating = "player_rating_tool.cli:main"

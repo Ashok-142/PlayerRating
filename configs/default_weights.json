@@ -1,0 +1,9 @@
+{
+  "recent_season_weight": 0.6,
+  "past_season_weight": 0.4,
+  "batting_role_weight": 0.7,
+  "bowling_role_weight": 0.7,
+  "allrounder_split_weight": 0.45,
+  "fielding_weight": 0.1,
+  "allrounder_margin": 8.0
+}
