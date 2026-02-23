@@ -3,70 +3,101 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .classifier import batting_skill, bowling_skill, classify_role, fielding_skill
-from .loader import group_by_player
-from .models import PlayerProfile, PlayerSeasonStats
+from .classifier import batting_skill, bowling_skill, fielding_skill
+from .models import PlayerProfile, PlayerStats
 
 DEFAULT_WEIGHTS = {
-    "recent_season_weight": 0.6,
-    "past_season_weight": 0.4,
-    "batting_role_weight": 0.70,
-    "bowling_role_weight": 0.70,
-    "allrounder_split_weight": 0.45,
-    "fielding_weight": 0.10,
-    "allrounder_margin": 8.0,
+    "batter_batting_weight": 0.78,
+    "batter_bowling_weight": 0.05,
+    "batter_fielding_weight": 0.17,
+    "bowler_batting_weight": 0.05,
+    "bowler_bowling_weight": 0.78,
+    "bowler_fielding_weight": 0.17,
+    "allrounder_batting_weight": 0.44,
+    "allrounder_bowling_weight": 0.41,
+    "allrounder_fielding_weight": 0.15,
+    "wicket_keeper_batting_weight": 0.50,
+    "wicket_keeper_bowling_weight": 0.08,
+    "wicket_keeper_fielding_weight": 0.42,
+    "selection_shrinkage_k": 20.0,
+    "emerging_max_innings": 12.0,
+    "emerging_slots": 1.0,
+    "desired_rating_filter_enabled": 0.0,
+    "team_structure": {
+        "Batter": 4,
+        "Bowler": 3,
+        "Allrounder": 3,
+        "Wicket Keeper": 1,
+    },
 }
 
 
-def load_weights(path: str | None = None) -> dict[str, float]:
+def load_weights(path: str | None = None) -> dict[str, object]:
     if path is None:
         return DEFAULT_WEIGHTS.copy()
 
     config = DEFAULT_WEIGHTS.copy()
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    config.update({k: float(v) for k, v in payload.items() if k in config})
+    for k, v in payload.items():
+        if k not in config:
+            continue
+        if isinstance(config[k], dict):
+            if not isinstance(v, dict):
+                raise ValueError(f"Expected object for '{k}'")
+            config[k] = {str(role): int(count) for role, count in v.items()}
+        else:
+            config[k] = float(v)
     return config
 
 
-def _blend_scores(series: list[float], recent_weight: float, past_weight: float) -> float:
-    if not series:
-        return 0.0
-    if len(series) == 1:
-        return series[0]
-    return (series[-1] * recent_weight) + ((sum(series[:-1]) / (len(series) - 1)) * past_weight)
+def _role_weights(role: str, weights: dict[str, float]) -> tuple[float, float, float]:
+    if role == "Batter":
+        return (
+            weights["batter_batting_weight"],
+            weights["batter_bowling_weight"],
+            weights["batter_fielding_weight"],
+        )
+    if role == "Bowler":
+        return (
+            weights["bowler_batting_weight"],
+            weights["bowler_bowling_weight"],
+            weights["bowler_fielding_weight"],
+        )
+    if role == "Allrounder":
+        return (
+            weights["allrounder_batting_weight"],
+            weights["allrounder_bowling_weight"],
+            weights["allrounder_fielding_weight"],
+        )
+    if role == "Wicket Keeper":
+        return (
+        weights["wicket_keeper_batting_weight"],
+        weights["wicket_keeper_bowling_weight"],
+        weights["wicket_keeper_fielding_weight"],
+        )
+    # Neutral fallback when role is blank.
+    return (
+        weights["allrounder_batting_weight"],
+        weights["allrounder_bowling_weight"],
+        weights["allrounder_fielding_weight"],
+    )
 
 
-def rate_players(records: list[PlayerSeasonStats], weights: dict[str, float]) -> list[PlayerProfile]:
-    grouped = group_by_player(records)
+def rate_players(records: list[PlayerStats], weights: dict[str, float]) -> list[PlayerProfile]:
     profiles: list[PlayerProfile] = []
 
-    for seasons in grouped.values():
-        seasons_sorted = sorted(seasons, key=lambda x: x.season)
-        recent_weight = weights["recent_season_weight"]
-        past_weight = weights["past_season_weight"]
+    for stats in records:
+        batting = batting_skill(stats)
+        bowling = bowling_skill(stats)
+        fielding = fielding_skill(stats)
+        role = stats.role
 
-        batting = _blend_scores([batting_skill(s) for s in seasons_sorted], recent_weight, past_weight)
-        bowling = _blend_scores([bowling_skill(s) for s in seasons_sorted], recent_weight, past_weight)
-        fielding = _blend_scores([fielding_skill(s) for s in seasons_sorted], recent_weight, past_weight)
+        batting_w, bowling_w, fielding_w = _role_weights(role, weights)
+        rating = (batting * batting_w) + (bowling * bowling_w) + (fielding * fielding_w)
 
-        role = classify_role(batting, bowling, allrounder_margin=weights["allrounder_margin"])
-
-        if role == "batter":
-            rating = (batting * weights["batting_role_weight"]) + (fielding * weights["fielding_weight"])
-        elif role == "bowler":
-            rating = (bowling * weights["bowling_role_weight"]) + (fielding * weights["fielding_weight"])
-        else:
-            rating = (
-                (batting * weights["allrounder_split_weight"])
-                + (bowling * weights["allrounder_split_weight"])
-                + (fielding * weights["fielding_weight"])
-            )
-
-        latest = seasons_sorted[-1]
         profiles.append(
             PlayerProfile(
-                player_id=latest.player_id,
-                player_name=latest.player_name,
+                player_name=stats.player_name,
                 role=role,
                 rating=round(rating, 2),
                 batting_score=round(batting, 2),
@@ -78,7 +109,5 @@ def rate_players(records: list[PlayerSeasonStats], weights: dict[str, float]) ->
     return sorted(profiles, key=lambda p: p.rating, reverse=True)
 
 
-def rate_player(player_records: list[PlayerSeasonStats], weights: dict[str, float]) -> PlayerProfile:
-    if not player_records:
-        raise ValueError("No records provided")
-    return rate_players(player_records, weights)[0]
+def rate_player(player_record: PlayerStats, weights: dict[str, float]) -> PlayerProfile:
+    return rate_players([player_record], weights)[0]

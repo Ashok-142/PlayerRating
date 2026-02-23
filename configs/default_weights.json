@@ -1,9 +1,24 @@
 {
-  "recent_season_weight": 0.6,
-  "past_season_weight": 0.4,
-  "batting_role_weight": 0.7,
-  "bowling_role_weight": 0.7,
-  "allrounder_split_weight": 0.45,
-  "fielding_weight": 0.1,
-  "allrounder_margin": 8.0
+  "batter_batting_weight": 0.78,
+  "batter_bowling_weight": 0.05,
+  "batter_fielding_weight": 0.17,
+  "bowler_batting_weight": 0.05,
+  "bowler_bowling_weight": 0.78,
+  "bowler_fielding_weight": 0.17,
+  "allrounder_batting_weight": 0.44,
+  "allrounder_bowling_weight": 0.41,
+  "allrounder_fielding_weight": 0.15,
+  "wicket_keeper_batting_weight": 0.5,
+  "wicket_keeper_bowling_weight": 0.08,
+  "wicket_keeper_fielding_weight": 0.42,
+  "selection_shrinkage_k": 20.0,
+  "emerging_max_innings": 12,
+  "emerging_slots": 1,
+  "desired_rating_filter_enabled": 1,
+  "team_structure": {
+    "Batter": 4,
+    "Bowler": 4,
+    "Allrounder": 2,
+    "Wicket Keeper": 1
+  }
 }
