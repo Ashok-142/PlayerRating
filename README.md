@@ -2,6 +2,20 @@
 
 Python tool to generate player ratings from a CSV and select playing XI.
 
+## Web app (CSV upload + tabs)
+
+Run a simple web UI with tabs: `Rate`, `Team`, `Raw Input`, and `Config`.
+
+- `Config` tab lets you edit weights/team structure.
+- `Apply Config` uses your edited values immediately.
+- `Save as Default Config` updates `configs/default_weights.json`.
+- `Raw Input` tab is editable; use `Apply Raw Input Edits` to recalculate `Rate` and `Team` (including Playing XI).
+
+```bash
+pip install streamlit pandas
+streamlit run app.py
+```
+
 ## Quick start
 
 ```bash
