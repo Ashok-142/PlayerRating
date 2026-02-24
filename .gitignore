@@ -1,0 +1,5 @@
+./player_rating_tool/__pycache__
+.env
+.env.local
+.env.*.local
+!.env.example

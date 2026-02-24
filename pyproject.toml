@@ -9,6 +9,11 @@ description = "Cricket player role classification and rating toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "PlayerRating"}]
+dependencies = [
+    "pandas>=2.0,<3.0",
+    "python-dotenv>=1.0,<2.0",
+    "streamlit>=1.32,<2.0",
+]
 
 [project.scripts]
 player-rating = "player_rating_tool.cli:main"

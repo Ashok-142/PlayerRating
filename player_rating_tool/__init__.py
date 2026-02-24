@@ -1,14 +1,10 @@
-"""Player rating and team selection toolkit."""
+"""Player rating toolkit."""
 
-from .models import PlayerSeasonStats, PlayerProfile
-from .classifier import classify_role
+from .models import PlayerStats, PlayerProfile
 from .rating import rate_player
-from .selector import select_team
 
 __all__ = [
-    "PlayerSeasonStats",
+    "PlayerStats",
     "PlayerProfile",
-    "classify_role",
     "rate_player",
-    "select_team",
 ]

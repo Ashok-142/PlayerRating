@@ -1,0 +1,12 @@
+player_name,role,selection_score,base_rating,sample_size,reason,batting_score,bowling_score,fielding_score
+Ashok,Bowler,39.38,45.44,19,default,0.0,55.38,13.16
+Suresh Gopal,Bowler,38.54,41.94,29,default,2.03,52.26,6.32
+Balamurugan,Batter,35.03,41.1,21,default,46.38,58.37,11.81
+Ragu,Bowler,34.77,36.21,16,default,8.48,41.02,22.28
+Prabu,Bowler,34.1,36.05,5,default,37.02,42.13,7.87
+Sathish KK,Batter,31.33,34.0,20,default,39.41,53.17,3.57
+Girish Gowda,Batter,29.84,31.08,19,default,34.85,50.81,7.97
+Sharman,Batter,29.1,29.78,13,default,35.11,0.0,14.08
+Vishnu,Wicket Keeper,28.68,31.57,12,default,25.74,0.0,44.51
+Arun Joshi,Batter,28.54,28.21,7,default,33.44,0.0,12.5
+Balraj,Bowler,27.08,8.43,7,default,30.85,7.67,5.36
