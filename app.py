@@ -10,9 +10,11 @@ import streamlit as st
 
 from player_rating_tool.loader import load_player_history
 from player_rating_tool.rating import load_weights, rate_players
+from player_rating_tool.secrets import load_env_files
 from player_rating_tool.selector import select_team
 
 CONFIG_PATH = Path("configs/default_weights.json")
+load_env_files()
 
 
 def _load_records_from_dataframe(raw_df: pd.DataFrame) -> list:

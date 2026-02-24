@@ -6,10 +6,12 @@ from pathlib import Path
 
 from .loader import load_player_history
 from .rating import load_weights, rate_players
+from .secrets import load_env_files
 from .selector import select_team
 
 
 ROLE_ORDER = ("Batter", "Bowler", "Allrounder", "Wicket Keeper")
+load_env_files()
 
 
 def run_rate(history_path: str, weights_path: str | None, output_path: str | None) -> int:

@@ -16,6 +16,34 @@ pip install streamlit pandas
 streamlit run app.py
 ```
 
+## Deploy online
+
+### Render
+
+This repo includes `requirements.txt`, `Procfile`, and `render.yaml` for quick deployment.
+
+1. Push the repository to GitHub.
+2. In Render, create a new **Web Service** and connect the repo.
+3. Render auto-detects `render.yaml`, or use:
+   - Build command: `pip install --upgrade pip && pip install -r requirements.txt`
+   - Start command: `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT`
+
+### Other platforms (Railway/Heroku-like)
+
+- Build/install: `pip install -r requirements.txt`
+- Start: `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT`
+
+## Secrets and API keys
+
+- Do not hardcode keys in source code.
+- Use environment variables in production platforms (Render/Railway/Heroku).
+- For local development, copy `.env.example` to `.env` and set values there.
+- For Streamlit-hosted environments, you can also use `st.secrets`.
+
+The project now includes `player_rating_tool/secrets.py` helpers:
+- `get_secret("NAME")` for optional values
+- `require_secret("NAME")` when a key is mandatory
+
 ## Quick start
 
 ```bash
