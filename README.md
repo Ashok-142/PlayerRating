@@ -13,8 +13,11 @@ Run a simple web UI with tabs: `Scoring`, `Playing XI`, `Player Rating`, `Raw In
 - `Scoring` tab lets you:
   - create a match with home/away squads
   - add squads in a table with role dropdown per player
+  - capture toss winner + toss decision (`bat first` / `bowl first`)
   - set total overs
   - score ball-by-ball with quick one-click actions (`0/1/2/3/4/6`, `Wide`, `No Ball`, `Bye`, `LegBye`, `Wicket`)
+  - auto-setup first innings batting/bowling side in live console from toss details
+  - view live ball-by-ball history directly in the live score screen
   - persist events + per-match batting/bowling aggregates into SQLite (`data/player_rating.db`)
 
 ```bash

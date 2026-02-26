@@ -187,6 +187,21 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     for stmt in statements:
         conn.execute(stmt)
 
+    _ensure_match_toss_columns(conn)
+
+
+def _ensure_match_toss_columns(conn: sqlite3.Connection) -> None:
+    columns = {
+        str(row["name"])
+        for row in conn.execute("PRAGMA table_info(matches)").fetchall()
+    }
+    if "toss_winner_team_id" not in columns:
+        conn.execute(
+            "ALTER TABLE matches ADD COLUMN toss_winner_team_id INTEGER REFERENCES teams(id)"
+        )
+    if "toss_decision" not in columns:
+        conn.execute("ALTER TABLE matches ADD COLUMN toss_decision TEXT")
+
 
 def _normalize_team_name(name: str) -> str:
     cleaned = str(name or "").strip()
@@ -217,6 +232,19 @@ def _normalize_dismissal_type(dismissal_type: str | None) -> str | None:
     if token == "":
         return None
     return token
+
+
+def _normalize_toss_decision(toss_decision: str | None) -> str | None:
+    if toss_decision is None:
+        return None
+    token = str(toss_decision).strip().lower().replace("_", " ")
+    if token == "":
+        return None
+    if token in {"bat", "bat first"}:
+        return "bat"
+    if token in {"bowl", "bowl first", "field", "field first"}:
+        return "bowl"
+    raise ValueError("Invalid toss_decision. Use 'bat' or 'bowl'.")
 
 
 def _get_or_create_team(conn: sqlite3.Connection, team_name: str) -> int:
@@ -263,6 +291,8 @@ def create_match_with_squads(
     total_overs: int,
     home_squad: list[dict[str, str]],
     away_squad: list[dict[str, str]],
+    toss_winner: str | None = None,
+    toss_decision: str | None = None,
     db_path: str | Path | None = None,
 ) -> int:
     if int(total_overs) <= 0:
@@ -280,12 +310,43 @@ def create_match_with_squads(
         if home_team_id == away_team_id:
             raise ValueError("Home and away team must be different")
 
+        toss_winner_team_id: int | None = None
+        normalized_toss_decision = _normalize_toss_decision(toss_decision)
+        toss_winner_token = str(toss_winner or "").strip().lower()
+        if toss_winner_token:
+            home_name = _normalize_team_name(home_team).lower()
+            away_name = _normalize_team_name(away_team).lower()
+            if toss_winner_token == home_name:
+                toss_winner_team_id = home_team_id
+            elif toss_winner_token == away_name:
+                toss_winner_team_id = away_team_id
+            else:
+                raise ValueError("Toss winner must be either home team or away team")
+
+        if toss_winner_team_id is None and normalized_toss_decision is not None:
+            raise ValueError("Toss winner is required when toss decision is provided")
+        if toss_winner_team_id is not None and normalized_toss_decision is None:
+            raise ValueError("Toss decision is required when toss winner is provided")
+
         cur = conn.execute(
             """
-            INSERT INTO matches(home_team_id, away_team_id, total_overs, status)
-            VALUES(?, ?, ?, 'scheduled')
+            INSERT INTO matches(
+                home_team_id,
+                away_team_id,
+                total_overs,
+                status,
+                toss_winner_team_id,
+                toss_decision
+            )
+            VALUES(?, ?, ?, 'scheduled', ?, ?)
             """,
-            (home_team_id, away_team_id, int(total_overs)),
+            (
+                home_team_id,
+                away_team_id,
+                int(total_overs),
+                toss_winner_team_id,
+                normalized_toss_decision,
+            ),
         )
         match_id = int(cur.lastrowid)
 
@@ -338,10 +399,14 @@ def list_matches(db_path: str | Path | None = None) -> list[dict[str, Any]]:
                 ht.id AS home_team_id,
                 ht.name AS home_team_name,
                 at.id AS away_team_id,
-                at.name AS away_team_name
+                at.name AS away_team_name,
+                m.toss_winner_team_id,
+                tw.name AS toss_winner_team_name,
+                m.toss_decision
             FROM matches m
             JOIN teams ht ON ht.id = m.home_team_id
             JOIN teams at ON at.id = m.away_team_id
+            LEFT JOIN teams tw ON tw.id = m.toss_winner_team_id
             ORDER BY m.id DESC
             """
         ).fetchall()
@@ -362,10 +427,14 @@ def get_match(match_id: int, db_path: str | Path | None = None) -> dict[str, Any
                 ht.id AS home_team_id,
                 ht.name AS home_team_name,
                 at.id AS away_team_id,
-                at.name AS away_team_name
+                at.name AS away_team_name,
+                m.toss_winner_team_id,
+                tw.name AS toss_winner_team_name,
+                m.toss_decision
             FROM matches m
             JOIN teams ht ON ht.id = m.home_team_id
             JOIN teams at ON at.id = m.away_team_id
+            LEFT JOIN teams tw ON tw.id = m.toss_winner_team_id
             WHERE m.id = ?
             """,
             (int(match_id),),
@@ -873,6 +942,39 @@ def load_player_history_from_db(db_path: str | Path | None = None) -> list[Playe
         )
 
     return records
+
+
+def get_player_team_map(db_path: str | Path | None = None) -> dict[str, str]:
+    with get_connection(db_path) as conn:
+        _ensure_schema(conn)
+        rows = conn.execute(
+            """
+            SELECT
+                p.player_name,
+                t.name AS team_name
+            FROM players p
+            LEFT JOIN team_players tp ON tp.player_id = p.id
+            LEFT JOIN teams t ON t.id = tp.team_id
+            WHERE p.is_active = 1
+            ORDER BY p.player_name, t.name
+            """
+        ).fetchall()
+
+    team_names_by_player: dict[str, list[str]] = {}
+    for row in rows:
+        player_name = str(row["player_name"])
+        team_name = row["team_name"]
+        if player_name not in team_names_by_player:
+            team_names_by_player[player_name] = []
+        if team_name is not None:
+            token = str(team_name)
+            if token not in team_names_by_player[player_name]:
+                team_names_by_player[player_name].append(token)
+
+    return {
+        player_name: ", ".join(names) if names else ""
+        for player_name, names in team_names_by_player.items()
+    }
 
 
 def _recompute_match_state(conn: sqlite3.Connection, match_id: int) -> None:
