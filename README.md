@@ -4,17 +4,29 @@ Python tool to generate player ratings from a CSV and select playing XI.
 
 ## Web app (CSV upload + tabs)
 
-Run a simple web UI with tabs: `Rate`, `Team`, `Raw Input`, and `Config`.
+Run a simple web UI with tabs: `Scoring`, `Playing XI`, `Player Rating`, `Raw Input`, and `Config`.
 
 - `Config` tab lets you edit weights/team structure.
 - `Apply Config` uses your edited values immediately.
 - `Save as Default Config` updates `configs/default_weights.json`.
-- `Raw Input` tab is editable; use `Apply Raw Input Edits` to recalculate `Rate` and `Team` (including Playing XI).
+- `Raw Input` shows aggregated player history generated from scored matches in DB.
+- `Scoring` tab lets you:
+  - create a match with home/away squads
+  - add squads in a table with role dropdown per player
+  - set total overs
+  - score ball-by-ball with quick one-click actions (`0/1/2/3/4/6`, `Wide`, `No Ball`, `Bye`, `LegBye`, `Wicket`)
+  - persist events + per-match batting/bowling aggregates into SQLite (`data/player_rating.db`)
 
 ```bash
 pip install streamlit pandas
 streamlit run app.py
 ```
+
+## Database-backed scoring and player history
+
+The app uses SQLite player history aggregated from scored matches for rating and team selection by default.
+Ball-level events are stored in SQLite tables (`matches`, `innings`, `ball_events`, `player_match_batting_stats`, `player_match_bowling_stats`, etc.).
+Player historical batting/bowling metrics used by the rating and team-selection flow can be loaded directly from this DB.
 
 ## Deploy online
 
